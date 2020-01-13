@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>What is it? -- javascript</title>
+    <link href="//libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+    <script src="//libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <script src="//libs.baidu.com/bootstrap/3.0.3/js/bootstrap.js"></script>
+    <script src="scripts/xFunctions.min.js"></script>
+    <script src="scripts/shotgun.js.base64.js"></script>
+    <script src="scripts/shotgun.js.charsets.all.min.js"></script>
+    <script src="scripts/TypeScripts/Shotgun.Library.js"></script>
+    <script src="scripts/TypeScripts/Shotgun.Ui.Bootstrap.js"></script>
+    <script src="scripts/TypeScripts/stream.js"></script>
+    <script src="scripts/TypeScripts/xType.js"></script>
+    <script src="scripts/TypeScripts/whatIsIt.js"></script>
+    <script src="scripts/TypeScripts/whatIsIt_number.js"></script>
+    <script src="scripts/TypeScripts/Linq.js"></script>
+    <script src="scripts/TypeScripts/whatIsIt_json_xml.js"></script>
+    <script src="scripts/TypeScripts/whatIsIt_zip.js"></script>
+    <script src="scripts/TypeScripts/whatIsIt_image.js"></script>
+
+    <script>
+
+        function txt_ondblclick(sender) {
+            $(".autoResult").alert('close');
+            var src = sender.form["src"];
+            var bin = null;
+            try {
+                bin = Shotgun.Js.Library.parseHex(src.value);
+            } catch (e) {
+                alert(e.message);
+                return;
+            }
+            var rlt = WhatIsIt.itIs(bin);
+            var r = WhatIsIt.formatResult(rlt, bin);
+            sender.form["out"].value = r.text;// JSON.stringify(r, null, 4).replace("\\n", "\n");
+            var div = Shotgun.Ui.Bootstrap.createAlert("success", true);
+            div.addClass("autoResult");
+            div.append(r.htmlResult);
+            $(sender.form).append(div);
+            if (r.formatted) $(".formatted > .glyphicon-question-sign").tooltip();
+        }
+        $(function () { $("[data-toggle='tooltip']").tooltip(); });
+    </script>
+    <style type="text/css">
+        form {
+            position: relative;
+            display: inline-block;
+        }
+
+        .autoResult {
+            position: absolute;
+            right: 1px;
+            bottom: 1px;
+            margin-bottom: 0;
+            opacity: 0.9;
+            max-width: 350px;
+        }
+
+        .alert-dismissable .close {
+            right: 5px;
+            top: inherit;
+            bottom: 5px;
+            position: absolute;
+            opacity: 1;
+        }
+
+        textarea {
+            width: 700px;
+            height: 200px;
+            font-family: "Courier New", "Microsoft YaHei";
+        }
+    </style>
+
+</head>
+
+<body onload="document.getElementById('cnv').click()">
+    <form onsubmit="return false;">
+        <div><textarea name="src">{"hello":"kitty"}</textarea></div>
+        <input id="cnv" type="button" value="转换" onclick="txt_ondblclick(this,{})" /><br />
+        <textarea id="out" rows="10" cols="70"></textarea>
+    </form>
+</body>
+
+</html>

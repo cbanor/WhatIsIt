@@ -1,0 +1,21 @@
+{
+  "name": "what-is-it",
+  "version": "1.0.0",
+  "description": "The-x.cn 'What is it' plugin ",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && concurrently \"npm run tsc:w\" \"npm run lite\"",
+    "lite": "lite-server",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w"
+  },
+  "author": "shotgun",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^2.2.0",
+    "lite-server": "^2.2.0"
+  },
+  "dependencies": {
+    "@types/jquery": "^3.3.31"
+  }
+}

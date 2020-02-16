@@ -20,7 +20,7 @@ namespace Shotgun.Js {
     export class Library {
         public static parseHex(hexStr: string): Array<number> {
             var bin = new Array<number>();
-            var spliter = [',', '-', ' ', '\n', '\r', '\t'];
+            var spliter = [',', '-', ' ', '\n', '\r', '\t', ';', ':', '\'', '"', '\\'];
             var iLow = true, has = false;
             var val = 0, line = 1, col = 0;
             var tmp: number;
@@ -35,10 +35,18 @@ namespace Shotgun.Js {
                     iLow = true;
                     continue;
                 }
+                if (c == 'x') {
+                    if (!has) continue; //比如 0x
+                    if (val != 0)
+                        bin.push(val);
+                    has = false;
+                    iLow = true;
+                    continue;
+                }
                 has = true;
                 tmp = parseInt(c, 16);
-                if (isNaN(tmp)) 
-                    throw { message: "Invalid  Hex character：\"".concat(c, "\" at row:", <any>line, ",col:", <any>col) };
+                if (isNaN(tmp))
+                    throw { message: "Invalid hex character:\"".concat(c, "\"\nRow:", <any>line, ", Col:", <any>col) };
 
                 if (iLow) {
                     val = tmp;
@@ -59,6 +67,16 @@ namespace Shotgun.Js {
 
         public static isNullOrEempty(str: string): boolean {
             return str == null || str.length == 0;
+        }
+        public static byteSize(size: number, fractionDigits: number = 2): string {
+            if (size < 1024) return size.toString();
+
+            var times = -1;
+            while (size >= 1024) {
+                size /= 1024;
+                times++;
+            }
+            return size.toFixed(fractionDigits).concat("KMGTP".substr(times,1));
         }
 
 

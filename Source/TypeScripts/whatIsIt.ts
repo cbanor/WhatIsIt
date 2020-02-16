@@ -120,7 +120,7 @@ class WhatIsIt {
 
                     var div = $("<div class='pluginResult'></div>");
                     ret.htmlResult.append(div);
-                    div.append("插件名：【".concat(r.name).concat("】,").concat(r.message).concat("【").concat(r.continue ? "疑似" : "确认").concat("】"));
+                    div.append("插件名：【".concat(r.name, "】", r.message, r.continue ? "【疑似】" : ""));
 
                     if (r.canDownload) {
                         var lnk = this.createUrl(bin, r);
@@ -159,9 +159,10 @@ class WhatIsIt {
 
         ret.formatted = !Shotgun.Js.Library.isNullOrEempty(ret.text);
         if (encoder == Encoder.Unknow) {
-            ret.htmlResult.append($("<div>当前编码：<em class='encoder'>【Hex".concat(iSuccess ? "" : "+Ascii", "】</em></div>")));
-            if (!ret.formatted)
+            if (!ret.formatted) {
+                ret.htmlResult.append($("<div>当前编码：<em class='encoder'>【Hex".concat(iSuccess ? "" : "+Ascii", "】</em></div>")));
                 ret.text = bytesToHex(bin, { withAscii: !iSuccess });
+            }
         } else {
             ret.htmlResult.append($("<div>当前编码：<em class='encoder'>【".concat(Encoder[encoder], "】</em></div>")));
             if (!ret.formatted)

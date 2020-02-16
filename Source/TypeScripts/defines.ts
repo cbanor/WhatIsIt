@@ -10,6 +10,13 @@ interface IWhatIsItResult {
     /**是否处理成功 */
     isSuccess: boolean;
 }
+/**文件信息*/
+interface IFileInfo {
+    name: String;
+    size: Number;
+    lastWrited: Date;
+    isDirectory: Boolean;
+}
 
 /**WhatIs 插件plugin处理结果 */
 interface IWhatIsPluginResult {

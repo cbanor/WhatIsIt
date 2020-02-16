@@ -17,5 +17,9 @@
   },
   "dependencies": {
     "@types/jquery": "^3.3.31"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cbanor/WhatIsIt.git"
   }
 }

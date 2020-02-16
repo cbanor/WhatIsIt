@@ -35,68 +35,99 @@ itIs.push({
         return rlt;
     }
 });
-itIs.push({
+itIs.push(<IWhatIsItPlgin>{
     "flag": 0x504B0304, bits: 32, name: "Zip",
     function(stm: MemoryStream) {
-        stm.bigEndian = false;
-        //var err: number = 0;
-        var info = new Object();
-        var val = stm.readUInt16();
-        info["Version"] = (val / 10).toFixed(1);
-        info["First File"] = null;
-        val = stm.readUInt16(); //Flags
-        if (val & 0x01)
-            info["Encrypted"] = true;
-        if (val & 0x40)
-            info["Encrypted"] = "strong encryption";
-        var gBit3: boolean = (val & 0x04) != 0;
-
-        val = stm.readUInt16();
-        if (val < 9)
-            info["Compression"] = ["0-Stored (no compression)", "1-Shrunk", "2-Reduced with compression factor 1",
-                "3-Reduced with compression factor 2", "4-Reduced with compression factor 3",
-                "5-Reduced with compression factor 4", "6-Imploded", "7-Reserved for Tokenizing compression algorithm",
-                "8-Deflated"][val];
-
-        val = stm.readUInt16();
-
-        if (val > 0) {
-            var d: Date = new Date();
-            d.setSeconds((val & 0x01f) << 2);
-            val >>= 5, d.setMinutes(val & 0x3f);
-            val >>= 6, d.setHours(val);
-            val = stm.readUInt16();
-            d.setDate(val & 0x1f);
-            val >>= 5, d.setMonth(val & 0x0f - 1);
-            val >>= 4, d.setFullYear(val + 1980);
-            info["Last Modified"] = d.toLocaleString();
+        if (!this.getZipInfo(stm)) return null;
+        var files = this.getCdInfo(stm);
+        var info = { "Encrypted": this.isEncrypted, "Files": files.length, "Total Size": 0 };
+        var txt = "Zip Data Incluce:\n".concat(new Array(18).join("-"),"\n");
+        var total = 0;
+        for (var i = 0; i < files.length; i++) {
+            const file = files[i];
+            total += file.size;
+            txt = txt.concat(Shotgun.Js.Library.byteSize(file.size), "Byte\t", file.name, "\n");
         }
-        if (gBit3)
-            stm.seek(12, 0);//The correct values are put in the data descriptor immediately following the compressed data.
-        else {
-            val = stm.readUInt32();
-            if (val != 0)
-                info["CRC32"] = "0x".concat(val.toString(16));
-
-            var pSize = stm.readUInt32();
-            if (pSize !== 0xffffffff && pSize > 0) {
-                info["Package Size"] = pSize.toString();
-                if (stm.getLength() < pSize)
-                    return null;
-            }
-            val = stm.readUInt32();
-            if (val !== 0xffffffff && val > 0)
-                info["File Size"] = val.toString();
-        }
-        pSize = stm.readUInt16();
-        var efl: number = stm.readUInt16();
-        var fName = stm.readBytes(pSize);
-        if (pSize == 0)
-            delete info["First File"];
-        else
-            info["First File"] = Shotgun.Js.Charsets.fromGB2312Bytes(fName);
-        //stm.seek(efl,0);
-
-        return { property: info, message: "Zip Format file", continue: false, canDownload: true, extension: "zip" };
+        info["Total Size"] = total;
+        return { property: info, message: "Zip-based or zip file", resultType: "text", result: txt, continue: false, canDownload: true, extension: "zip" };
+    },
+    convertZipDate(zipDate: number, zipTime: number): Date {
+        var d: Date = new Date();
+        if (zipDate == 0) return d;
+        var val = zipTime;
+        d.setSeconds((val & 0x01f) << 2);
+        val >>= 5, d.setMinutes(val & 0x3f);
+        val >>= 6, d.setHours(val);
+        val = zipDate;
+        d.setDate(val & 0x1f);
+        val >>= 5, d.setMonth(val & 0x0f - 1);
+        val >>= 4, d.setFullYear(val + 1980);
+        return d;
     }
+    , getZipInfo(stm: MemoryStream) {
+        //End of central directory record
+        const flag: Number = 0x06054b50;
+        var f: number;
+        stm.seek(-22, 2);
+        var epX = stm.position - 0x10022;
+        if (epX < 0) epX = 64;
+        do {
+            f = stm.readUInt32();
+            if (f == flag) break;
+            stm.seek(-5, 0);
+        } while (stm.position > epX);
+        if (stm.position <= 32) return false;
+        stm.seek(6, 0);
+        this.numOfCd = stm.readUInt16();
+        var sizeOfCd = stm.readUInt32();
+        this.posOfCd = stm.readUInt32();
+        if (sizeOfCd + this.posOfCd > stm.getLength()) {
+            console.warn("sizeOfCd+this.posOfCd>stm.getLength()");
+            return false;
+        }
+        var sizeOfComment = stm.readUInt16();
+        if (sizeOfComment > 0) {
+            if (sizeOfComment + stm.position > stm.getLength())
+                return false;
+            this.zipComment = Shotgun.Js.Charsets.fromGB2312Bytes(stm.readBytes(sizeOfComment));
+        }
+        return this.numOfCd > 0 && this.posOfCd > 0;
+
+    },
+    getCdInfo(stm: MemoryStream): IFileInfo[] {
+        stm.seek(this.posOfCd, 1);
+        const flag: number = 0x02014b50;
+        var files = new Array<IFileInfo>();
+        for (var i = 0; i < this.numOfCd; i++) {
+            var val: number = stm.readUInt32();
+            if (val != flag) return null;
+            stm.seek(4, 0);
+            val = stm.readUInt16(); //Flags
+            if (val & 0x01)
+                this.isEncrypted = true;
+            else if (val & 0x40)
+                this.isEncrypted = true;//strong encryption;
+            var file: IFileInfo = <IFileInfo>new Object();
+            stm.seek(2, 0);
+            var time = stm.readUInt16();
+            val = stm.readUInt16();
+            file.lastWrited = this.convertZipDate(val, time);
+            stm.seek(8, 0);//skip crc , Compressed size;
+            file.size = stm.readUInt32();
+            val = stm.readUInt16();
+            var nSize = stm.readUInt16();//Extra field length (m)
+            nSize += stm.readUInt16();//File comment length (k)
+            stm.seek(2 + 2 + 4 + 4, 0);//Disk number where file starts,Internal file attributes,External file attributes,relative offset of local header
+            var bin = stm.readBytes(val)
+            file.name = Shotgun.Js.Charsets.fromGB2312Bytes(bin);
+            files.push(file);
+            stm.seek(nSize, 0);//偏移扩展信息
+            //console.log(JSON.stringify(file));
+        }
+        return files;
+    },
+    zipComment: null,
+    numOfCd: 0,
+    posOfCd: 0,
+    isEncrypted: false
 });

@@ -4,6 +4,7 @@ itIs.push({
     "flag": 0x1F8B08, "bits": 24, "name": "Gzip", "mode": "stream",
     function(stm: MemoryStream) {
         //https://blog.csdn.net/jison_r_wang/article/details/52068607
+        //http://www.360doc.com/content/16/0313/10/22355405_541778872.shtml
         if (stm.getLength() < 16) return null;
         var f = stm.readByte();
         if ((f & 0xE0) !== 0) //Bit 5~7   预留，必须全0
@@ -32,6 +33,10 @@ itIs.push({
                 "8-Z-System", "9-CP/M", "10-TOPS-20", "11-NTFS filesystem(NT)",
                 "12-QDOS", "13-Acorn RISCOS", "14-VFAT file system (Win95, NT)", "15-MVS or PRIMOS",
                 "16-BeOS", "17-Tandem/NSK", "18-THEOS", "19-macOS,,OS/X,iOS or watchOS"][os];
+
+        stm.seek(-4, 2);
+        var size = stm.readUInt32();
+        rlt.property["DataSize"] = Shotgun.Js.Library.byteSize(size).concat("Byte");
         return rlt;
     }
 });
@@ -41,7 +46,7 @@ itIs.push(<IWhatIsItPlgin>{
         if (!this.getZipInfo(stm)) return null;
         var files = this.getCdInfo(stm);
         var info = { "Encrypted": this.isEncrypted, "Files": files.length, "Total Size": 0 };
-        var txt = "Zip Data Incluce:\n".concat(new Array(18).join("-"),"\n");
+        var txt = "Zip Data Incluce:\n".concat(new Array(18).join("-"), "\n");
         var total = 0;
         for (var i = 0; i < files.length; i++) {
             const file = files[i];

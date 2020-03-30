@@ -158,7 +158,7 @@ itIs.push({
             continue: false,
             message: "Bmp Image",
             mimeType: "image/bmp",
-            extension: "jpg",
+            extension: "bmp",
             canDownload: true,
             property: { "Size": (width + "x" + height) }
         };

@@ -1,61 +1,63 @@
 declare var itIs: IWhatIsItPlgin[];
 
-itIs.push({
+itIs.push(<IWhatIsItPlgin>{
     flag: 0x3082 >> 2, bits: 16 - 2, name: "PEM(PrivateKey)",
+
+    getIntegerSize(binr: MemoryStream): number {
+        var bt = 0, lowbyte = 0x00, highbyte = 0x00, count = 0;
+        bt = binr.readByte();
+        if (bt != 0x02)     //expect integer
+            return 0;
+        bt = binr.readByte();
+
+        if (bt == 0x81)
+            count = binr.readByte(); // data size in next byte
+        else if (bt == 0x82) {
+            count = binr.readByte() << 8;
+            count |= binr.readByte();
+        }
+        else
+            count = bt; // we already have the data size
+
+
+        if (binr.readByte() == 0)
+            count--;
+        //else  //Ö»¶ÁÒ»´Î£¬ÔòÎÞÐèÀí»áÒÔÏÂÕâÒ»¶Î
+        //    binr.seek(-1, 0);
+        return count;
+    },
+    getRSAPrivateKeyPKCS1(binr: MemoryStream, offset: number): IWhatIsPluginResult {
+        var twobytes = binr.readUInt16();
+        if (twobytes == 0x8130)//data read as little endian order (actual data order for Sequence is 30 81)  
+            binr.position++;//advance 1 byte  
+        else if (twobytes == 0x8230)
+            binr.position += 2;//advance 2 bytes  
+        else
+            return null;
+
+        twobytes = binr.readUInt16();
+        if (twobytes != 0x0102) //version number
+            return null;
+        var bt = binr.readByte();
+        if (bt != 0x00) return null;
+
+        var len = this.getIntegerSize(binr);
+        if (len === 0) return null;
+
+        return {
+            continue: false,
+            message: "PEM Private Key",
+            property: {
+                KeySize: (len * 8).toString().concat("Bits"),
+                KeyType: "Private Key + Public Key",
+                Format: offset > 0 ? "PKCS8" : "PKCS1"
+            }
+        };
+    },
     function(binr: MemoryStream) {
         var seqOID = [0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00];
-        var getIntegerSize = function (binr: MemoryStream) {
-            var bt = 0, lowbyte = 0x00, highbyte = 0x00, count = 0;
-            bt = binr.readByte();
-            if (bt != 0x02)     //expect integer
-                return 0;
-            bt = binr.readByte();
-
-            if (bt == 0x81)
-                count = binr.readByte(); // data size in next byte
-            else if (bt == 0x82) {
-                count = binr.readByte() << 8;
-                count |= binr.readByte();
-            }
-            else
-                count = bt; // we already have the data size
 
 
-            if (binr.readByte() == 0)
-                count--;
-            //else  //Ö»ï¿½ï¿½Ò»ï¿½Î£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
-            //    binr.seek(-1, 0);
-            return count;
-        };
-        var getRSAPrivateKeyPKCS1 = function (binr: MemoryStream, offset: number): IWhatIsPluginResult {
-            var twobytes = binr.readUInt16();
-            if (twobytes == 0x8130)//data read as little endian order (actual data order for Sequence is 30 81)  
-                binr.position++;//advance 1 byte  
-            else if (twobytes == 0x8230)
-                binr.position += 2;//advance 2 bytes  
-            else
-                return null;
-
-            twobytes = binr.readUInt16();
-            if (twobytes != 0x0102) //version number
-                return null;
-            bt = binr.readByte();
-            if (bt != 0x00)
-                return null;
-
-            var len = getIntegerSize(binr);
-            if (len === 0) return null;
-
-            return {
-                continue: false,
-                message: "PEM Private Key",
-                property: {
-                    KeySize: (len * 8).toString().concat("Bits"),
-                    KeyType: "Private Key + Public Key",
-                    Format: offset > 0 ? "PKCS8" : "PKCS1"
-                }
-            };
-        };
         binr.seek(0, 1);
         var twobytes = binr.readUInt16();
         if (twobytes == 0x8130)    //data read as little endian order (actual data order for Sequence is 30 81)  
@@ -73,9 +75,9 @@ itIs.push({
         if (sId != 0x09060d30) //maybe is Sequence OID 
         {
             binr.seek(0, 1);
-            return getRSAPrivateKeyPKCS1(binr, 0);
+            return this.getRSAPrivateKeyPKCS1(binr, 0);
         }
-        for (var i = 4; i < seqOID.length; i++) {//sIdï¿½ï¿½Ç°ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        for (var i = 4; i < seqOID.length; i++) {//sId¼´Ç°ËÄÎ»£¬¿ÉÖ±½ÓÌø¹ý
             if (binr.readByte() != seqOID[i]) return null;
         }
         bt = binr.readByte();
@@ -86,7 +88,7 @@ itIs.push({
             binr.position++;
         else if (bt == 0x82)
             binr.position += 2;
-        return getRSAPrivateKeyPKCS1(binr, binr.position);
+        return this.getRSAPrivateKeyPKCS1(binr, binr.position);
     }
 });
 

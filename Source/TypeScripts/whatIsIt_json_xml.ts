@@ -101,7 +101,7 @@ itIs.push({
             return ret.join(' ');
         }
         function encode(value: string): string {
-            if (Shotgun.Js.Library.isNullOrEempty(value)) return value;
+            if (String.isNullOrEmpty(value)) return value;
             var ret: string[] = new Array<string>();
             for (var i = 0; i < value.length; i++) {
                 const c = value.charAt(i);
@@ -120,10 +120,32 @@ itIs.push({
         function nodeToStr(node: Element, dept: number, cnt: string[]): void {
             if (node.nodeType == 3) return;//#text ??
             if (node.nodeType == 4) { //CDATA IE?!
-                cnt.push(tab.concat(s, "<![CDATA[", node.firstChild.nodeValue, "]]>"));
+                cnt.push("<![CDATA[".concat(node.firstChild.nodeValue, "]]>"));
                 return;
             }
             var tab: string = (new Array<string>(dept * 2 + 1)).join(" ");
+            if (node.nodeType == 8) {//注释
+                cnt.push(tab.concat("<!--", node.nodeValue, "-->"));
+                return;
+            }
+            if (node.nodeType == 10) {
+                var attr = [];
+                var dType = <DocumentType><any>node;
+                if (!String.isNullOrEmpty(dType.name))
+                    attr.push(dType.name);
+                if (!String.isNullOrEmpty(dType.publicId))
+                    attr.push("PUBLIC \"".concat(dType.publicId, "\""));
+
+                if (!String.isNullOrEmpty(dType.systemId))
+                    attr.push("\"".concat(dType.systemId, "\""));
+
+                if (attr.length == 0)
+                    cnt.push("<!DOCTYPE>");
+                else
+                    cnt.push("<!DOCTYPE ".concat(attr.join(" "), ">"));
+                nodeToStr(<Element>node.nextSibling, dept, cnt);
+                return;
+            }
             var name = node.nodeName;// node.nodeType==1;//Element
             var s = "<".concat(name);
             if (node.hasAttributes()) {

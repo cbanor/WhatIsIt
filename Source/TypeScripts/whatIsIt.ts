@@ -1,6 +1,7 @@
 ﻿var itIs = new Array<IWhatIsItPlgin>();
 
 class WhatIsIt {
+    
     /**数据识别耗时（ms）*/
     static elapsed: number;
     /**

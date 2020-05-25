@@ -5,6 +5,7 @@ declare namespace Shotgun.Js {
       class Library {
         /*浏览器是否支持Uint8Array*/
         public static uint8ArraryDefined :boolean;
+         
 
         public static parseHex(hexStr: string): Array<number> ;
 

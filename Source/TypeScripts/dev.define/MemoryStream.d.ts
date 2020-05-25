@@ -37,5 +37,4 @@ declare class MemoryStream {
     newLineMode: NewLineEnum;
     Encoding: Encoder;
     readLine(encode?: Encoder): string;
-
 }

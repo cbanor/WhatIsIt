@@ -7,8 +7,8 @@
             if (mc[0].length != 3) return null;
         } while (mc = rx.exec(uStr));
         var lnk = document.createElement("a");
-        lnk.innerHTML = "UrlDecode Tools";
-        lnk.href = "/UrlDecode.aspx#from=base64decode";
+        lnk.innerHTML = "Url Codeing Tool";
+        lnk.href = $Localizer.getRouteUrl("Home", "UrlDecode").concat("#from=base64decode");
         lnk.target = "_blank";
         return { message: "Urlencode may have been used.", continue: true, resultType: "html", result: lnk };
     }

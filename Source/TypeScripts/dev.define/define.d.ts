@@ -3,21 +3,6 @@ declare interface StringConstructor {
     format(str: String, ...args: any): string
 }
 
-declare interface LanguageX {
-    public: any
-    base64: any
-    cryptography: any,
-    keyConverter: any,
-    regular: any
-}
-declare interface Window {
-    xLang: LanguageX
-}
-declare class $Localizer {
-    static get(fmt: string, ...args: any[]): string;
-    static libGet<K extends keyof LanguageX>(libName: K, fmt: keyof LanguageX[K], ...args: any[]): string;
-}
-
 /**字符编码定义*/
 declare enum Encoder {
     Utf8 = 0,
@@ -56,7 +41,7 @@ declare function Toast(msg: string, delay?: number, cssName?: string): object;
 
 declare interface IHexFormatOptions { withAscii?: boolean, noHead?: boolean, width?: number, preChar?: string, spliter?: string }
 declare function bytesToHex(bin: Uint8Array, options?: IHexFormatOptions): string;
-
+declare function crc32(bin: Uint8Array, crc?: number): number;
 
 /**WhatIs识别结果 */
 declare interface IWhatIsItResult {

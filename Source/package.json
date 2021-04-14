@@ -8,7 +8,7 @@
     "lite": "lite-server",
     "tsc": "tsc",
     "tsc:w": "tsc -w",
-    "compress":"uglifyjs ./scripts/TypeScripts/whatIsIt.js ./scripts/TypeScripts/whatIsIt_*.js -toplevel -o ./scripts/whatIsIt.min.js"
+    "compress": "uglifyjs ./scripts/TypeScripts/whatIsIt.js ./scripts/TypeScripts/whatIsIt_*.js -toplevel -o ./scripts/whatIsIt.min.js"
   },
   "author": "shotgun",
   "license": "ISC",
